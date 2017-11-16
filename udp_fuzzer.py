@@ -27,11 +27,9 @@ TVPacketData_Request = Struct(
 	),
 	"type" / Enum(Int8ub,
 		A=0x6b,
-		B=0x6f,
-		C=0x40,
-		D=0x6c,
-		E=0x73,
-		F=0x47
+		D=0x74,
+		E=0x76,
+		F=0x77
 	),
 	"length" / Int16ub,
 )
