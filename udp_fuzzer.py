@@ -108,23 +108,30 @@ def create_packet(protocol=None, src_ip=None, dst_ip=None, src_port=None, dst_po
 	print "Unknown protocol"
 	return None
 
-	global gstatus
-	print gstatus
-    tv_header = TVPacketData_Request.build({
-	"syn": 0x32000000,
-	"ack": 0x64000000,
-	"status": gstatus,#status[randint(0,len(status)-1)],
-	"flag": flag[randint(0,len(flag)-1)],
-	"signature": "Signature",
-	"type": types[randint(0, len(types)-1)],
-	"length": data_len_little    
-    })
-    display_header = Display.build({
-	"opcode": "update",
-	"max": "small" if (data_len >= 1024) else "equal",
-	"sequence": 0x46000000,
-	"option": option[randint(0, len(option)-1)]
-    })
+    global gstatus
+
+    iscontinue = True
+    while iscontinue:
+	try:
+	    tv_header = TVPacketData_Request.build({
+		"syn": 0x32000000,
+		"ack": 0x64000000,
+		"status": gstatus,#status[randint(0,len(status)-1)],
+		"flag": flag[randint(0,len(flag)-1)],
+		"signature": "Signature",
+		"type": types[randint(0, len(types)-1)],
+		"length": data_len_little    
+	    })
+	    display_header = Display.build({
+		"opcode": "update",
+		"max": "small" if (data_len >= 1024) else "equal",
+		"sequence": 0x46000000,
+		"option": option[randint(0, len(option)-1)]
+	    })
+	except:
+	    continue
+	iscontinue = False
+	
     packet = packet/tv_header/display_header/data
 
     print "[+] ==================== packet ===================="
