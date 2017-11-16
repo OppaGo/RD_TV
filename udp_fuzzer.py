@@ -11,11 +11,7 @@ import binascii
 TVPacketData_Request = Struct(
 	"syn" / Int32ub, 
 	"ack" / Int32ub,
-	"status" / Enum(Int16ub,
-		Request=0x6440,
-		Response=0x340d,
-		Query=0x0000
-	),
+	"status" / Int16ub,
 	"flag" / Enum(Int8ub,
 		A=0x03,
 		B=0x0b,
@@ -49,6 +45,8 @@ Display = Struct(
 		C=0x05000000
 	)
 )
+
+gstatus = 0x0000
 
 def banner():
 	print "==================================================="
@@ -85,7 +83,7 @@ def create_packet(protocol=None, src_ip=None, dst_ip=None, src_port=None, dst_po
     data_len_little = (data_len << 8) if (data_len < 0xff) else ((data_len << 8) & 0xff00) + ((data_len) >> 8)
     data_len_little = (data_len_little - 0x10) & 0xffff
 
-    status = ["Request", "Response", "Query"]
+    #status = ["Request", "Response", "Query"]
     flag = ["A", "B", "C", "D"]
     types = ["A", "B", "C", "D", "E", "F"]
     option = ["A", "B", "C"]
@@ -110,10 +108,12 @@ def create_packet(protocol=None, src_ip=None, dst_ip=None, src_port=None, dst_po
 	print "Unknown protocol"
 	return None
 
+	global gstatus
+	print gstatus
     tv_header = TVPacketData_Request.build({
 	"syn": 0x32000000,
 	"ack": 0x64000000,
-	"status": status[randint(0,len(status)-1)],
+	"status": gstatus,#status[randint(0,len(status)-1)],
 	"flag": flag[randint(0,len(flag)-1)],
 	"signature": "Signature",
 	"type": types[randint(0, len(types)-1)],
@@ -158,11 +158,12 @@ def config_netinfo():
 	argv = sys.argv
 	try:
 		opts, args = getopt.getopt(argv[1:],
-			"p:s:d:S:D:l:h",
-			["protocol=", "src_ip=", "dst_ip=", "src_port=", "dst_port=", "length=", "help"])
+			"p:s:d:S:D:l:r:h",
+			["protocol=", "src_ip=", "dst_ip=", "src_port=", "dst_port=", "length=", "status=", "help"])
 	except getopt.error:
 		usage()
 
+	global gstatus
 	netinfo = {'protocol':'tcp'}
 	for flag, value in opts:
 		if flag in ['-p', '--protocol']:
@@ -179,6 +180,8 @@ def config_netinfo():
 			netinfo['dst_port'] = int(value)
 		elif flag in ['-l', '--length']:
 			netinfo['length'] = int(value)
+		elif flag in ['-r', '--status']:
+			gstatus = int(value) & 0xffff
 		elif flag in ['-h', '--help']:
 			usage()
 		else:
