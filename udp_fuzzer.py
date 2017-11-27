@@ -8,7 +8,7 @@ import getopt
 import re
 import binascii
 
-TVPacketData_Request = Struct(
+UDPFlowControl = Struct(
 	"syn" / Int32ub, 
 	"ack" / Int32ub,
 	"status" / Int16ub,
@@ -17,7 +17,10 @@ TVPacketData_Request = Struct(
 		B=0x0b,
 		C=0x1b,
 		D=0x30
-	),
+	)
+)
+
+TVCMDData = Struct(
 	"signature" / Enum(Int16ub,
 		Signature=0x1724,
 	),
@@ -108,31 +111,26 @@ def create_packet(protocol=None, src_ip=None, dst_ip=None, src_port=None, dst_po
 	print "Unknown protocol"
 	return None
 
-    global gstatus
-
-    iscontinue = True
-    while iscontinue:
-	try:
-	    tv_header = TVPacketData_Request.build({
+	global gstatus
+	print gstatus
+	udpflow = UDPFlowControl.build({
 		"syn": 0x32000000,
 		"ack": 0x64000000,
 		"status": gstatus,#status[randint(0,len(status)-1)],
 		"flag": flag[randint(0,len(flag)-1)],
-		"signature": "Signature",
-		"type": types[randint(0, len(types)-1)],
-		"length": data_len_little    
-	    })
-	    display_header = Display.build({
-		"opcode": "update",
-		"max": "small" if (data_len >= 1024) else "equal",
-		"sequence": 0x46000000,
-		"option": option[randint(0, len(option)-1)]
-	    })
-	except:
-	    continue
-	iscontinue = False
-	
-    packet = packet/tv_header/display_header/data
+	})
+    tv_header = TVCMDData.build({
+	"signature": "Signature",
+	"type": types[randint(0, len(types)-1)],
+	"length": data_len_little    
+    })
+    display_header = Display.build({
+	"opcode": "update",
+	"max": "small" if (data_len >= 1024) else "equal",
+	"sequence": 0x46000000,
+	"option": option[randint(0, len(option)-1)]
+    })
+    packet = packet/udpflow/tv_header/display_header/data
 
     print "[+] ==================== packet ===================="
     hexdump(packet)
